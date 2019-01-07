@@ -13,6 +13,7 @@ import utils
 import makemkv
 import handbrake
 import identify
+import pickle
 
 from config import cfg
 from classes import Disc
@@ -88,7 +89,10 @@ def main(logfile, disc):
 
     log_arm_params(disc)
 
-    if disc.disctype in ["dvd", "bluray"]:
+    lastdisc = pickle.load(open( "prevdisc.p", "rb" ))
+    if lastdisc == str(disc.videotitle): 
+        utils.notify("ARM Notification", "Previous disc was inserted.  Exiting.")
+    elif disc.disctype in ["dvd", "bluray"]:
         utils.notify("ARM notification", "Found disc: " + str(disc.videotitle) + ". Video type is "
                      + str(disc.videotype) + ". Main Feature is " + str(cfg['MAINFEATURE']) + ".")
     elif disc.disctype == "music":
@@ -187,6 +191,8 @@ def main(logfile, disc):
                         mkvoutfile = os.path.join(mkvoutpath, f)
                         logging.debug("Moving file: " + mkvoutfile + " to: " + mkvoutpath + f)
                         shutil.move(mkvoutfile, hboutpath)
+                lastdisc = str(disc.videotitle)
+                pickle.dump(lastdisc, open("prevdisc.p", "wb"))
                 # remove raw files, if specified in config
                 if cfg['DELRAWFILES']:
                     logging.info("Removing raw files")
